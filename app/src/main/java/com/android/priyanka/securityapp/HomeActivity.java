@@ -1,9 +1,11 @@
 package com.android.priyanka.securityapp;
 
 import android.Manifest;
+import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
@@ -13,8 +15,8 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.telephony.PhoneStateListener;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -31,6 +33,9 @@ import com.karumi.dexter.listener.PermissionRequestErrorListener;
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 import com.karumi.dexter.listener.single.PermissionListener;
 
+import java.io.ByteArrayOutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.List;
 
 import butterknife.BindView;
@@ -48,6 +53,11 @@ public class HomeActivity extends AppCompatActivity {
     EditText edNumber;
     @BindView(R.id.call)
     ImageButton call;
+    @BindView(R.id.save)
+    Button save;
+
+    String image_str,phnum;
+
 
     private final int requestCode = 20;
     CustomPhoneStateListener customPhoneStateListener;
@@ -59,7 +69,7 @@ public class HomeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_home);
         ButterKnife.bind(this);
 
-       // customPhoneStateListener = new CustomPhoneStateListener(this);
+        // customPhoneStateListener = new CustomPhoneStateListener(this);
         CheckPhoneState checkPhoneState = new CheckPhoneState();
 
     }
@@ -73,7 +83,28 @@ public class HomeActivity extends AppCompatActivity {
             case R.id.call:
                 requestCallPermission();
                 break;
+            case R.id.save:
+                saveData();
+                break;
         }
+    }
+
+    private void saveData() {
+
+        Calendar c = Calendar.getInstance();
+        SimpleDateFormat dateformat = new SimpleDateFormat("dd-MMM-yyyy");
+        String datetime = dateformat.format(c.getTime());
+        System.out.println("dddd.."+datetime);
+
+        DatabaseHelper databaseHelper = new DatabaseHelper(this);
+        SQLiteDatabase db = databaseHelper.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put("phone",phnum);
+        values.put("imagevalue",image_str);
+
+
+
     }
 
     public void requestCallPermission() {
@@ -167,7 +198,7 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void callPerson() {
-        String phnum = edNumber.getText().toString();
+        phnum = edNumber.getText().toString();
         Intent callIntent = new Intent(Intent.ACTION_CALL);
         callIntent.setData(Uri.parse("tel:" + phnum));
         startActivity(callIntent);
@@ -192,10 +223,17 @@ public class HomeActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if(this.requestCode == requestCode && resultCode == RESULT_OK){
-            Bitmap bitmap = (Bitmap)data.getExtras().get("data");
+        if (this.requestCode == requestCode && resultCode == RESULT_OK) {
+            Bitmap bitmap = (Bitmap) data.getExtras().get("data");
             personImage.setImageBitmap(bitmap);
             addPhoto.setVisibility(View.INVISIBLE);
+
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+            byte[] byteArray = stream.toByteArray();
+            image_str = Base64.encodeBytes(byteArray);
         }
     }
+
+
 }
