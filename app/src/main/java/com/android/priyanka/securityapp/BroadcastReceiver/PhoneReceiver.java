@@ -1,4 +1,4 @@
-package com.android.priyanka.securityapp;
+package com.android.priyanka.securityapp.BroadcastReceiver;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

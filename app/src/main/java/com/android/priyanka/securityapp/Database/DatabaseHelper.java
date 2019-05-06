@@ -1,4 +1,4 @@
-package com.android.priyanka.securityapp;
+package com.android.priyanka.securityapp.Database;
 
 import android.content.ContentValues;
 import android.content.Context;
