@@ -9,6 +9,7 @@
     android:orientation="vertical"
     tools:context=".HomeActivity"
     android:background="#E9F0F8"
+    android:id="@+id/relativeLayout"
     >
 <!--<LinearLayout
     android:layout_width="match_parent"
@@ -180,14 +181,14 @@
             android:layout_height="wrap_content"
             android:textColor="@color/colorAccent"
             android:layout_gravity="center"
-            android:text="Add image"/>
+            android:text="@string/addimage"/>
 
 
         <EditText
             android:id="@+id/name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Enter Name"
+            android:hint="@string/entername"
             android:inputType="textPersonName"
             android:textSize="15sp"
             android:layout_marginTop="10dp"
@@ -210,7 +211,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Male"
+                android:text="@string/male"
                 android:textSize="15sp"
                 />
             <RadioButton
@@ -218,7 +219,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Female"
+                android:text="@string/female"
                 android:textSize="15sp"
                 />
 
@@ -227,7 +228,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Other"
+                android:text="@string/other"
                 android:textSize="15sp"
                 />
         </RadioGroup>
@@ -245,7 +246,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:hint="Enter Phone number"
+                android:hint="@string/enterphone"
                 android:inputType="phone"
                 android:textSize="15sp"/>
 
@@ -269,7 +270,7 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:gravity="center"
-        android:text="Done"
+        android:text="@string/done"
         android:layout_marginBottom="10dp"
         android:textSize="15sp" />
 

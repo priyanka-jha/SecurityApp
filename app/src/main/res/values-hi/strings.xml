@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">सुरक्षा</string>
+    <string name="change_language">भाषा बदलो</string>
+    <string name="done">किया हुआ</string>
+    <string name="choose_language">अपनी भाषा चुनिए</string>
+    <string name="addimage">छवि जोड़ें</string>
+    <string name="entername">नाम दर्ज</string>
+    <string name="male">पुरुष</string>
+    <string name="female">महिला</string>
+    <string name="other">अन्य</string>
+
+    <string name="enterphone">
+फोन नंबर दर्ज</string>
+</resources>

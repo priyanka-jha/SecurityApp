@@ -1,27 +1,41 @@
 package com.android.priyanka.securityapp;
 
 import android.Manifest;
+import android.app.Activity;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.provider.Settings;
+import android.support.annotation.IdRes;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.util.Patterns;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.karumi.dexter.Dexter;
@@ -36,6 +50,10 @@ import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 import com.karumi.dexter.listener.single.PermissionListener;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -61,6 +79,7 @@ public class HomeActivity extends AppCompatActivity {
     Button save;
 
     String image_str, phnum, personname;
+    Bitmap bitmap;
 
 
     private final int requestCode = 20;
@@ -74,15 +93,39 @@ public class HomeActivity extends AppCompatActivity {
     RadioGroup gender;
     @BindView(R.id.other)
     RadioButton other;
+    @BindView(R.id.relativeLayout)
+    RelativeLayout relativeLayout;
     private String persongender;
 
     DatabaseHelper databaseHelper;
+
+    Locale locale;
+    String language = "en";
+    String lang;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
         ButterKnife.bind(this);
+
+        setTitle(getString(R.string.app_name));
+
+
+
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        language = preferences.getString("language", "en");
+        locale = new Locale(language);
+        saveLocale(language);
+        Locale.setDefault(locale);
+        Configuration config = new Configuration();
+        config.locale = locale;
+        getBaseContext().getResources().updateConfiguration(config,
+                getBaseContext().getResources().getDisplayMetrics());
+
+
+
+
         databaseHelper = new DatabaseHelper(this);
         gender.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
 
@@ -105,6 +148,15 @@ public class HomeActivity extends AppCompatActivity {
                 System.out.println("gender::" + persongender);
             }
         });
+    }
+
+    public void saveLocale(String lang) {
+        String langPref = "Language";
+        SharedPreferences prefs = getSharedPreferences("CommonPrefs",
+                Activity.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString(langPref, lang);
+        editor.commit();
     }
 
     @OnClick({R.id.add_photo, R.id.call, R.id.save})
@@ -131,29 +183,142 @@ public class HomeActivity extends AppCompatActivity {
         personname = edtname.getText().toString().trim();
         phnum = edNumber.getText().toString();
 
-
-        //current date
-        String date_n = new SimpleDateFormat("dd-MMM-yyyy", Locale.getDefault()).format(new Date());
-
-        //Display current time
-        Calendar c = Calendar.getInstance();
-        SimpleDateFormat df = new SimpleDateFormat("HH:mm a");
-        String cur_time = df.format(c.getTime());
-
-        System.out.println("personname:  " + personname);
-        System.out.println("persongender:  " + persongender);
-        System.out.println("phnum:  " + phnum);
-        System.out.println("date_n:  " + date_n);
-        System.out.println("cur_time:  " + cur_time);
-
-        Toast.makeText(this, "Saved", Toast.LENGTH_SHORT).show();
+        if (!checkValidation(personname, persongender, phnum, bitmap)) {
+            System.out.println("if....." + persongender);
 
 
-        databaseHelper.insertStudent(personname, persongender, phnum, date_n, cur_time);
-        databaseHelper.close();
+        } else {
+            System.out.println("else....");
+
+            //current date
+            String date_n = new SimpleDateFormat("dd-MMM-yyyy", Locale.getDefault()).format(new Date());
+
+            //Display current time
+            Calendar c = Calendar.getInstance();
+            SimpleDateFormat df = new SimpleDateFormat("HH:mm a");
+            String cur_time = df.format(c.getTime());
+
+            System.out.println("personname:  " + personname);
+            System.out.println("persongender:  " + persongender);
+            System.out.println("phnum:  " + phnum);
+            System.out.println("date_n:  " + date_n);
+            System.out.println("cur_time:  " + cur_time);
+
+            Toast.makeText(this, "Saved", Toast.LENGTH_SHORT).show();
+
+
+            databaseHelper.insertStudent(personname, persongender, phnum, date_n, cur_time);
+            databaseHelper.close();
+
+
+            String timeStamp = new SimpleDateFormat("yyyyMMdd_HH.mm.ss").format(new Date());
+
+            //current date
+            String date = new SimpleDateFormat("dd-MMM-yyyy", Locale.getDefault()).format(new Date());
+
+            File f = new File(Environment.getExternalStorageDirectory() + "/BldgImages" + "_" + date);
+            if (f.exists() && f.isDirectory()) {
+                System.out.println("directory exists");
+                FileOutputStream outStream = null;
+                // String fileName = String.format("%d.jpg", System.currentTimeMillis());
+                String fileName = personname + "_" + phnum + "_" + timeStamp + ".jpg";
+
+                File outFile = new File(f, fileName);
+                try {
+                    outStream = new FileOutputStream(outFile);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outStream);
+                try {
+                    outStream.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    outStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                refreshGallery(outFile);
+
+            } else {
+                System.out.println("directory doesnt exists");
+
+                FileOutputStream outStream = null;
+                File sdCard = Environment.getExternalStorageDirectory();
+                File dir = new File(sdCard.getAbsolutePath() + "/BldgImages" + "_" + date);
+                dir.mkdirs();
+                String fileName = personname + "_" + phnum + "_" + timeStamp + ".jpg";
+
+              //  String fileName = String.format("%d.jpg", System.currentTimeMillis());
+                File outFile = new File(dir, fileName);
+                try {
+                    outStream = new FileOutputStream(outFile);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outStream);
+                try {
+                    outStream.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    outStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                refreshGallery(outFile);
+
+            }
+
+
+        }
 
 
     }
+
+    public void refreshGallery(File file) {
+        Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+        intent.setData(Uri.fromFile(file));
+        sendBroadcast(intent);
+    }
+
+
+    private boolean checkValidation(String personname, String persongender, String phnum, Bitmap bitmap) {
+
+        if (personname.isEmpty() || persongender == null || phnum.isEmpty()) {
+            Snackbar snackbar = Snackbar
+                    .make(relativeLayout, "Please enter all the data", Snackbar.LENGTH_LONG);
+            View sbView = snackbar.getView();
+            TextView tv = (TextView) sbView.findViewById(android.support.design.R.id.snackbar_text);
+            tv.setTextColor(Color.RED);
+            snackbar.show();
+            return false;
+        } else if (phnum.length() != 10) {
+            Snackbar snackbar = Snackbar
+                    .make(relativeLayout, "Please enter valid phone number", Snackbar.LENGTH_LONG);
+            View sbView = snackbar.getView();
+            TextView tv = (TextView) sbView.findViewById(android.support.design.R.id.snackbar_text);
+            tv.setTextColor(Color.RED);
+            snackbar.show();
+            return false;
+
+        } else if (bitmap == null) {
+           // Toast.makeText(getApplicationContext(), "Please click image", Toast.LENGTH_LONG).show();
+            Snackbar snackbar = Snackbar
+                    .make(relativeLayout, "Please click image", Snackbar.LENGTH_LONG);
+            View sbView = snackbar.getView();
+            TextView tv = (TextView) sbView.findViewById(android.support.design.R.id.snackbar_text);
+            tv.setTextColor(Color.RED);
+            snackbar.show();
+            return false;
+        }
+        return true;
+
+    }
+
 
     public void requestCallPermission() {
         Dexter.withActivity(this).withPermission(Manifest.permission.CALL_PHONE).withListener(new PermissionListener() {
@@ -285,7 +450,7 @@ public class HomeActivity extends AppCompatActivity {
 
         if (this.requestCode == requestCode && resultCode == RESULT_OK) {
 
-            Bitmap bitmap = (Bitmap) data.getExtras().get("data");
+            bitmap = (Bitmap) data.getExtras().get("data");
             personImage.setVisibility(View.VISIBLE);
             personImage.setImageBitmap(bitmap);
             addPhoto.setVisibility(View.INVISIBLE);
@@ -304,5 +469,80 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.home_menu, menu);
 
+        return super.onCreateOptionsMenu(menu);    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        switch (item.getItemId()) {
+            case R.id.changelanguage:
+
+                final Dialog dialog = new Dialog(HomeActivity.this);
+                dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+                dialog.setContentView(R.layout.radio_btn_dialog);
+                dialog.setTitle(getString(R.string.choose_language));
+                dialog.setCancelable(true);
+                RadioGroup group = (RadioGroup) dialog.findViewById(R.id.radiogroup);
+                final RadioButton en = (RadioButton) dialog.findViewById(R.id.en);
+                final RadioButton hi = (RadioButton) dialog.findViewById(R.id.hi);
+                if (language.equals("en")) {
+                    en.setChecked(true);
+                    lang = "en";
+                } else if (language.equals("hi")) {
+                    hi.setChecked(true);
+                    lang = "hi";
+                }
+                group.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+                    @Override
+                    public void onCheckedChanged(RadioGroup radioGroup, @IdRes int i) {
+                        if (en.isChecked()) {
+                            lang = "en";
+                        } else if (hi.isChecked()) {
+                            lang = "hi";
+                        }
+                    }
+                });
+
+                Button done = (Button) dialog.findViewById(R.id.done);
+                done.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        setLanguage(lang);
+                        dialog.dismiss();
+                    }
+                });
+                dialog.show();
+
+                break;
+
+
+
+
+
+            default:
+                break;
+        }
+
+       return super.onOptionsItemSelected(item);
+    }
+
+    public void setLanguage(String languageToLoad) {
+        locale = new Locale(languageToLoad);
+        Locale.setDefault(locale);
+        Configuration config = new Configuration();
+        config.locale = locale;
+        getBaseContext().getResources().updateConfiguration(config,
+                getBaseContext().getResources().getDisplayMetrics());
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString("language", languageToLoad);
+        editor.commit();
+        Intent i = new Intent(getApplicationContext(), HomeActivity.class);
+        startActivity(i);
+        finish();
+    }
 }
