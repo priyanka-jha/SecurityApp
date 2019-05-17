@@ -1,4 +1,4 @@
-package com.android.priyanka.securityapp;
+package com.android.priyanka.securityapp.Activity;
 
 import android.Manifest;
 import android.app.Activity;
@@ -37,7 +37,10 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.priyanka.securityapp.BroadcastReceiver.PhoneReceiver;
 import com.android.priyanka.securityapp.Database.DatabaseHelper;
+import com.android.priyanka.securityapp.R;
+import com.android.priyanka.securityapp.Service.CallDetectService;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.MultiplePermissionsReport;
 import com.karumi.dexter.PermissionToken;
@@ -77,12 +80,6 @@ public class HomeActivity extends AppCompatActivity {
     ImageButton call;
     @BindView(R.id.save)
     Button save;
-
-    String image_str, phnum, personname;
-    Bitmap bitmap;
-
-
-    private final int requestCode = 20;
     @BindView(R.id.male)
     RadioButton male;
     @BindView(R.id.female)
@@ -95,23 +92,22 @@ public class HomeActivity extends AppCompatActivity {
     RadioButton other;
     @BindView(R.id.relativeLayout)
     RelativeLayout relativeLayout;
+
     private String persongender;
 
-    DatabaseHelper databaseHelper;
+    private final int requestCode = 20;
 
+    DatabaseHelper databaseHelper;
+    String image_str, phnum, personname;
+    Bitmap bitmap;
     Locale locale;
     String language = "en";
     String lang;
 
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_home);
-        ButterKnife.bind(this);
-
-        setTitle(getString(R.string.app_name));
-
-
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         language = preferences.getString("language", "en");
@@ -122,6 +118,26 @@ public class HomeActivity extends AppCompatActivity {
         config.locale = locale;
         getBaseContext().getResources().updateConfiguration(config,
                 getBaseContext().getResources().getDisplayMetrics());
+
+
+
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_home);
+        ButterKnife.bind(this);
+
+        setTitle(getString(R.string.app_name));
+
+
+
+        /*SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        language = preferences.getString("language", "en");
+        locale = new Locale(language);
+        saveLocale(language);
+        Locale.setDefault(locale);
+        Configuration config = new Configuration();
+        config.locale = locale;
+        getBaseContext().getResources().updateConfiguration(config,
+                getBaseContext().getResources().getDisplayMetrics());*/
 
 
 
@@ -273,8 +289,15 @@ public class HomeActivity extends AppCompatActivity {
 
             }
 
-
+            finish();
+            startActivity(getIntent());
         }
+            /*edtname.getText().clear();
+            edNumber.getText().clear();
+            gender.clearCheck();
+            personImage.setImageResource(R.drawable.ic_account_circle_black);
+            addPhoto.setVisibility(View.VISIBLE);*/
+
 
 
     }
@@ -444,6 +467,8 @@ public class HomeActivity extends AppCompatActivity {
 
     }
 
+
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -473,7 +498,9 @@ public class HomeActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.home_menu, menu);
 
-        return super.onCreateOptionsMenu(menu);    }
+        return super.onCreateOptionsMenu(menu);
+    }
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {

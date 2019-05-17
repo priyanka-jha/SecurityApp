@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 import android.widget.Toast;
 
 import java.lang.reflect.Method;
@@ -12,11 +13,12 @@ import java.util.Date;
 
 public class PhoneReceiver extends BroadcastReceiver {
 
+    private static final String LOG_TAG = "phone receiver";
     private static int lastState = TelephonyManager.CALL_STATE_IDLE;
     private static Date callStartTime;
     private static boolean isIncoming;
     private static String savedNumber;
-
+    private static boolean noCallListenerYet = true;
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -92,9 +94,35 @@ public class PhoneReceiver extends BroadcastReceiver {
             onCallStateChanged(context, state, number);
         }*/
 
-
-
+        String number = intent.getStringExtra(Intent.EXTRA_PHONE_NUMBER);
+        if (noCallListenerYet) {
+            final TelephonyManager tm = (TelephonyManager) context.getSystemService(
+                    Context.TELEPHONY_SERVICE);
+            tm.listen(new PhoneStateListener() {
+                @Override
+                public void onCallStateChanged(int state, String incomingNumber) {
+                    switch (state) {
+                        case TelephonyManager.CALL_STATE_RINGING:
+                            Log.d(PhoneReceiver.LOG_TAG, "RINGING");
+                            break;
+                        case TelephonyManager.CALL_STATE_OFFHOOK:
+                            Log.d(PhoneReceiver.LOG_TAG, "OFFHOOK");
+                            break;
+                        case TelephonyManager.CALL_STATE_IDLE:
+                            Log.d(PhoneReceiver.LOG_TAG, "IDLE");
+                            break;
+                        default:
+                            Log.d(PhoneReceiver.LOG_TAG, "Default: " + state);
+                            break;
+                    }
+                }
+            }, PhoneStateListener.LISTEN_CALL_STATE);
+            noCallListenerYet = false;
+        }
     }
+
+
+
 
     private void onCallStateChanged(Context context, int state, String number) {
         if(lastState == state){
